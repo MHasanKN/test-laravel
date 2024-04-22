@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EncryptionKey;
 use App\Services\CryptoService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -31,7 +32,7 @@ class EncryptionController extends Controller
             // Save the client public key and identifier to the database
             EncryptionKey::updateOrCreate(
                 ['client_identifier' => $clientIdentifier], // Search array: the conditions to find the record
-                ['client_public_key' => $clientPublicKey, 'client_identifier' => $clientIdentifier] // Values array: the values to update or insert
+                ['client_public_key' => Crypt::encrypt($clientPublicKey), 'client_identifier' => $clientIdentifier] // Values array: the values to update or insert
             );
 
 
@@ -53,7 +54,7 @@ class EncryptionController extends Controller
 
         try {
             if ($clientAesData && $clientIdentifier) {
-                $encryptedData = $this->cryptoService->decryptDataWithClientPrivateKey($clientAesData, $clientIdentifier);
+                $encryptedData = $this->cryptoService->decryptDataWithOurPrivateKey($clientAesData, $clientIdentifier);
                 if($encryptedData == null) {
                     throw new \Exception("Data was not encrypted for response successfully.");
                 }

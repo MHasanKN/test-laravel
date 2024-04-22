@@ -73,7 +73,7 @@ class CryptoService
     /**
      * @throws Exception
      */
-    public function decryptDataWithClientPrivateKey($clientAesData, $clientIdentifier)
+    public function decryptDataWithOurPrivateKey($clientAesData, $clientIdentifier)
     {
         return DB::transaction(function () use ($clientAesData, $clientIdentifier) {
             $clientEncryptionData = EncryptionKey::where('client_identifier', $clientIdentifier)->first();
@@ -122,7 +122,7 @@ class CryptoService
 //            $serverAesKey = $this->getServerAesKey();
 
             // Encrypt the server AES key with the client's stored public RSA key
-            return $this->encryptWithRsaPublicKey($decryptedAesData['aesKey'], null, $clientEncryptionData->client_public_key);
+            return $this->encryptWithRsaPublicKey($decryptedAesData['aesKey'], null, Crypt::decrypt($clientEncryptionData->client_public_key));
         });
     }
 
@@ -169,7 +169,7 @@ class CryptoService
         if ($clientIdentifier != null && $publicKey == null) {
             $clientEncryptionData = EncryptionKey::where('client_identifier', $clientIdentifier)->first();
             if ($clientEncryptionData) {
-                $publicKey = $clientEncryptionData->client_public_key;
+                $publicKey = Crypt::decrypt($clientEncryptionData->client_public_key);
             } else {
                 Log::error("No client encryption data found for identifier: $clientIdentifier");
                 return null;
