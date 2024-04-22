@@ -26,7 +26,7 @@ class EncryptionController extends Controller
             ]);
 
             // Retrieve client data from request
-            $clientPublicKey = $validatedData['public_key'];
+            $clientPublicKey = base64_decode($validatedData['public_key']);
             $clientIdentifier = $validatedData['client_identifier'];
 
             // Save the client public key and identifier to the database
