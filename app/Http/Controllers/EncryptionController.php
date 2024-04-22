@@ -17,7 +17,6 @@ class EncryptionController extends Controller
     }
     public function shareKeys(Request $request)
     {
-        Log::info($request);
         return DB::transaction(function () use ($request) {
             // Validate the incoming request data
             $validatedData = $request->validate([
@@ -49,13 +48,16 @@ class EncryptionController extends Controller
 
     public function shareAesKey(Request $request)
     {
-        $clientAesKey = $request->input('encrypted_aes_key'); // JSON string from the request
+        $clientAesData = $request->input('encrypted_aes_key'); // JSON string from the request
         $clientIdentifier = $request->input('client_identifier'); // Public key directly from the request
 
         try {
-            if ($clientAesKey && $clientIdentifier) {
-                $decryptedData = $this->cryptoService->decryptData($clientAesKey, $clientIdentifier);
-                return response()->json(['encrypted' => $decryptedData]);
+            if ($clientAesData && $clientIdentifier) {
+                $encryptedData = $this->cryptoService->decryptDataWithClientPrivateKey($clientAesData, $clientIdentifier);
+                if($encryptedData == null) {
+                    throw new \Exception("Data was not encrypted for response successfully.");
+                }
+                return response()->json(['encrypted' => $encryptedData]);
             } else {
                 return response("Required payload is missing.", 500);
             }
@@ -71,10 +73,8 @@ class EncryptionController extends Controller
 
         try {
             if ($clientIdentifier) {
-                $randomData = [
-                    'abc'=>'human'
-                ];
-                $randomData = $this->cryptoService->encryptWithAesKey($randomData, $clientIdentifier);
+
+                $randomData = $this->cryptoService->encryptWithAesKey($requiredData, $clientIdentifier);
                 return response()->json(['encrypted' => $randomData]);
             } else {
                 return response("Required payload is missing.", 500);
