@@ -84,4 +84,25 @@ class EncryptionController extends Controller
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
+
+    public function getRandomData2(Request $request)
+    {
+        $clientIdentifier = $request->input('client_identifier');
+        $requiredData = $request->input('encrypted');
+
+        try {
+            if ($clientIdentifier) {
+                $randomData = [
+                    'abc'=>'human',
+                    'hasan'=>999
+                ];
+                $randomData = $this->cryptoService->encryptWithAesKey2($randomData, $clientIdentifier);
+                return response()->json(['encrypted' => $randomData]);
+            } else {
+                return response("Required payload is missing.", 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
 }

@@ -11,3 +11,4 @@ Route::get('/user', function (Request $request) {
 Route::post('/share-keys', [EncryptionController::class, 'shareKeys']);
 Route::post('/share-aes-key', [EncryptionController::class, 'shareAesKey']);
 Route::post('/random', [EncryptionController::class, 'getRandomData']);
+Route::post('/random2', [EncryptionController::class, 'getRandomData2']);

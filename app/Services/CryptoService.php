@@ -240,6 +240,40 @@ class CryptoService
         return base64_encode($encryptedData);
     }
 
+    public function encryptWithAesKey2(mixed $data, string $clientIdentifier): ?string
+    {
+        try {
+            // Retrieve the client's encryption data from the database
+            $clientEncryptionData = EncryptionKey::where('client_identifier', $clientIdentifier)->first();
+            if (!$clientEncryptionData || empty($clientEncryptionData->aes_key) || empty($clientEncryptionData->iv)) {
+                Log::error("No AES key or IV found for client identifier: $clientIdentifier");
+                throw new Exception("No AES key or IV found for client identifier: $clientIdentifier");
+            }
+            // Decrypt and decode the base64 AES key and IV from the database or wherever they are stored
+            $aesKeyBase64 = Crypt::decrypt($clientEncryptionData->aes_key);  // Decrypting AES key
+            $ivBase64 = Crypt::decrypt($clientEncryptionData->iv);           // Decrypting IV
+
+            // Decode from base64 to get the raw binary data
+            $aesKey = base64_decode($aesKeyBase64);
+            $iv = base64_decode($ivBase64);
+
+            $jsonData = json_encode($data);
+            Log::info("JSON After encode: " . $jsonData);
+            $encryptedData = openssl_encrypt($jsonData, 'aes-256-ctr', $aesKey, OPENSSL_RAW_DATA, $iv);
+            Log::info("After encryption: " . $encryptedData);
+            $base64EncryptedData = base64_encode($encryptedData);
+            Log::info("After encrypted to base64: " . $base64EncryptedData);
+
+            $decryptedData = openssl_decrypt(base64_decode($base64EncryptedData), 'aes-256-ctr', $aesKey, OPENSSL_RAW_DATA, $iv);
+            Log::info("After decryption: " . $decryptedData);
+
+        } catch (Exception $exception) {
+            Log::error($exception);
+            throw new Exception("Failed to decode AES key for client identifier:");
+        }
+        return $base64EncryptedData;
+    }
+
 
 
 }
